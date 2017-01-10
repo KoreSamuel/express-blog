@@ -27,8 +27,27 @@ app.use(session({
     store: new MongoStore({
         url: config.mongodb
     })
-}))
+}));
+
 app.use(flash());
+
+// set template global constant
+app.locals.blog = {
+    title: pkg.name,
+    description: pkg.description
+};
+
+app.use(function (req, res, next) {
+    res.locals.user = req.session.user;
+    res.locals.success = req.flash('success').toString();
+    res.locals.error = req.flash('error').toString();
+    next();
+});
+// img uploead
+app.use(require('express-formidable')({
+  uploadDir: path.join(__dirname, 'public/img'),
+  keepExtensions: true
+}));
 
 routes(app);
 
