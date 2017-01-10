@@ -71,12 +71,53 @@ router.get('/:postId', function(req, res, next) {
         })
         .catch(next);
 });
+
 router.get('/:postId/edit', checkLogin, function(req, res, next) {
-    res.send(req.flash());
+    var postId = req.params.postId;
+    var author = req.session.user._id;
+
+    PostModel.getRawPostById(postId)
+        .then(function(post) {
+            if (!post) {
+                throw new Error('该文章不存在');
+            }
+            if (author.toString() !== post.author._id.toString()) {
+                throw new Error('权限不足');
+            }
+            res.render('edit', {
+                post: post
+            });
+        })
+        .catch(next);
+});
+
+router.post('/:postId/edit', checkLogin, function(req, res, next) {
+    var postId = req.params.postId;
+    var author = req.session.user._id;
+    var title = req.fields.title;
+    var content = req.fields.content;
+    console.log(req.fields);
+    PostModel.updatePostById(postId, author, {
+            title: title,
+            content: content
+        })
+        .then(function() {
+            req.flash('success', '编辑文章成功');
+            res.redirect(`/posts/${postId}`);
+        })
+        .catch(next);
 });
 
 router.get('/:postId/remove', checkLogin, function(req, res, next) {
-    res.send(req.flash());
+    var postId = req.params.postId;
+    var author = req.session.user._id;
+
+    PostModel.delPostById(postId, author)
+        .then(function() {
+            req.flash('success', '删除文章成功');
+            res.redirect('/posts');
+        })
+        .catch(next);
 });
 
 router.get('/:postId/comment', checkLogin, function(req, res, next) {
